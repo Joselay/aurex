@@ -1,0 +1,41 @@
+[project]
+name = "xauusd-signal-bot"
+version = "0.1.0"
+description = "Telegram signal bot for XAUUSD forex/CFD analysis"
+readme = "README.md"
+authors = [
+    { name = "Tongmenglay Smae", email = "98274892+Joselay@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "apscheduler>=3.11.3",
+    "httpx>=0.28.1",
+    "numpy>=2.5.0",
+    "pandas>=3.0.4",
+    "pydantic-settings>=2.14.2",
+    "python-telegram-bot>=22.8",
+    "ta>=0.11.0",
+]
+
+[project.scripts]
+xauusd-signal-bot = "xauusd_signal_bot.main:cli"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[build-system]
+requires = ["uv_build>=0.11.8,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.15.20",
+]
