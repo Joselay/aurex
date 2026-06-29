@@ -2,8 +2,8 @@ from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
-from xauusd_signal_bot.models import Direction
-from xauusd_signal_bot.strategy import XauUsdTrendStrategy
+from lumiere.models import Direction
+from lumiere.strategy import XauUsdTrendStrategy
 
 
 def _candles(closes: list[float]) -> pd.DataFrame:

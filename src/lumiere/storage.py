@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-from xauusd_signal_bot.models import Signal
+from lumiere.models import Signal
 
 
 class SignalStore:

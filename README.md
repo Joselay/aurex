@@ -1,4 +1,4 @@
-# XAUUSD Telegram Signal Bot
+# Lumiere
 
 Python bot that watches XAUUSD candles, generates rule-based signals, and sends them to Telegram.
 
@@ -30,13 +30,13 @@ For a channel, add the bot as an admin and use the channel ID or username.
 Check once and exit:
 
 ```bash
-uv run xauusd-signal-bot --once
+uv run lumiere --once
 ```
 
 Run the Telegram command bot and scheduled signal checks:
 
 ```bash
-uv run xauusd-signal-bot
+uv run lumiere
 ```
 
 Telegram commands:

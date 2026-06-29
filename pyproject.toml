@@ -1,7 +1,7 @@
 [project]
-name = "xauusd-signal-bot"
+name = "lumiere"
 version = "0.1.0"
-description = "Telegram signal bot for XAUUSD forex/CFD analysis"
+description = "Lumiere Telegram signal bot for XAUUSD forex/CFD analysis"
 readme = "README.md"
 authors = [
     { name = "Tongmenglay Smae", email = "98274892+Joselay@users.noreply.github.com" }
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-xauusd-signal-bot = "xauusd_signal_bot.main:cli"
+lumiere = "lumiere.main:cli"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

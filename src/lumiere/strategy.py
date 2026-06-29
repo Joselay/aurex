@@ -3,7 +3,7 @@ from ta.momentum import RSIIndicator
 from ta.trend import EMAIndicator
 from ta.volatility import AverageTrueRange
 
-from xauusd_signal_bot.models import Direction, Signal, normalize_candles
+from lumiere.models import Direction, Signal, normalize_candles
 
 
 class XauUsdTrendStrategy:

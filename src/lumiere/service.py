@@ -1,10 +1,10 @@
 import logging
 
-from xauusd_signal_bot.data_provider import MarketDataProvider
-from xauusd_signal_bot.models import Signal
-from xauusd_signal_bot.storage import SignalStore
-from xauusd_signal_bot.strategy import XauUsdTrendStrategy
-from xauusd_signal_bot.telegram_bot import TelegramNotifier
+from lumiere.data_provider import MarketDataProvider
+from lumiere.models import Signal
+from lumiere.storage import SignalStore
+from lumiere.strategy import XauUsdTrendStrategy
+from lumiere.telegram_bot import TelegramNotifier
 
 logger = logging.getLogger(__name__)
 

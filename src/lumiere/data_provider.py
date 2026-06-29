@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import httpx
 import pandas as pd
 
-from xauusd_signal_bot.models import normalize_candles
+from lumiere.models import normalize_candles
 
 
 class MarketDataProvider(ABC):
