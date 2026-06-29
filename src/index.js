@@ -24,8 +24,8 @@ export default {
     });
   },
 
-  async scheduled(_event, env, ctx) {
-    ctx.waitUntil(publishNewSignals(env));
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(publishNewSignals(env, { scheduledTime: event.scheduledTime }));
   },
 };
 

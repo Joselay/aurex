@@ -10,6 +10,13 @@ import {
   normalizeXauUsdSymbol,
   toTelegramMessage,
 } from "../src/index.js";
+import {
+  latestSignalKey,
+  latestSignals,
+  refreshDueSignals,
+  shouldPollTimeframe,
+  timeframeIntervalMinutes,
+} from "../src/signals.js";
 import { sendTelegramMessage } from "../src/telegram.js";
 
 function candlesFromCloses(closes) {
@@ -91,6 +98,98 @@ describe("candles", () => {
 
   it("formats candle time for human-facing messages", () => {
     assert.equal(formatCandleTime("2026-01-01T00:15:00.000Z"), "2026-01-01 00:15 UTC");
+  });
+});
+
+describe("market data cadence", () => {
+  it("converts supported timeframes to minutes", () => {
+    assert.equal(timeframeIntervalMinutes("5min"), 5);
+    assert.equal(timeframeIntervalMinutes("1h"), 60);
+    assert.equal(timeframeIntervalMinutes("1day"), 1440);
+    assert.equal(timeframeIntervalMinutes("custom"), null);
+  });
+
+  it("polls slower timeframes only when their candle should close", () => {
+    const quarterHour = new Date("2026-01-01T01:15:00.000Z");
+
+    assert.equal(shouldPollTimeframe("5min", quarterHour), true);
+    assert.equal(shouldPollTimeframe("15min", quarterHour), true);
+    assert.equal(shouldPollTimeframe("1h", quarterHour), false);
+    assert.equal(shouldPollTimeframe("custom", quarterHour), true);
+  });
+
+  it("refreshes and caches only due timeframes", async () => {
+    const originalFetch = globalThis.fetch;
+    const requestedIntervals = [];
+    const kv = new Map();
+
+    globalThis.fetch = async (url) => {
+      requestedIntervals.push(new URL(url).searchParams.get("interval"));
+      return Response.json({
+        values: [
+          { datetime: "2026-01-01 00:00:00", open: "1", high: "2", low: "0", close: "1" },
+          { datetime: "2026-01-01 00:05:00", open: "2", high: "3", low: "1", close: "2" },
+        ],
+      });
+    };
+
+    const env = {
+      SYMBOL: "XAU/USD",
+      TIMEFRAMES: "5min,15min,1h",
+      TWELVEDATA_API_KEY: "key",
+      SIGNALS: mapKv(kv),
+    };
+
+    try {
+      const signals = await refreshDueSignals(env, {
+        scheduledTime: Date.parse("2026-01-01T01:15:00.000Z"),
+      });
+
+      assert.deepEqual(signals, []);
+      assert.deepEqual(requestedIntervals, ["5min", "15min"]);
+      assert.equal(kv.has(latestSignalKey("5min")), true);
+      assert.equal(kv.has(latestSignalKey("15min")), true);
+      assert.equal(kv.has(latestSignalKey("1h")), false);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("reads latest signals from KV without fetching candles", async () => {
+    const originalFetch = globalThis.fetch;
+    const signal = {
+      key: "XAU/USD:5min:2026-01-01T00:05:00.000Z:BUY",
+      symbol: "XAU/USD",
+      timeframe: "5min",
+      direction: "BUY",
+      candleTime: "2026-01-01T00:05:00.000Z",
+    };
+    const kv = new Map([
+      [
+        latestSignalKey("5min"),
+        JSON.stringify({
+          timeframe: "5min",
+          checkedAt: "2026-01-01T00:05:00.000Z",
+          signal,
+        }),
+      ],
+    ]);
+
+    globalThis.fetch = async () => {
+      throw new Error("latestSignals should not fetch candles");
+    };
+
+    try {
+      assert.deepEqual(
+        await latestSignals({
+          TIMEFRAMES: "5min",
+          SIGNALS: mapKv(kv),
+        }),
+        [signal],
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
 
@@ -194,3 +293,14 @@ describe("telegram delivery", () => {
     assert.equal(requestBody.disable_web_page_preview, true);
   });
 });
+
+function mapKv(values) {
+  return {
+    async get(key) {
+      return values.get(key) ?? null;
+    },
+    async put(key, value) {
+      values.set(key, value);
+    },
+  };
+}

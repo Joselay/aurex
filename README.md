@@ -57,7 +57,13 @@ Key defaults:
 - `SYMBOL`: fixed to `XAU/USD`.
 - `TIMEFRAMES`: `5min,15min,1h`.
 - Cron trigger: every five minutes.
+- Market data source: Twelve Data `time_series`.
+- Market data cadence: each timeframe is fetched only when that candle should close. With the
+  default timeframes this is about 408 Twelve Data calls per day: 288 for `5min`, 96 for `15min`,
+  and 24 for `1h`.
 - Signal de-duplication: Workers KV namespace bound as `SIGNALS`.
+- Latest signal cache: Workers KV stores the latest checked result for each timeframe, so `/signal`
+  does not call Twelve Data.
 - Structure levels: support/resistance from recent swing pivots, plus projected support/resistance
   trendlines.
 
@@ -76,8 +82,8 @@ npm run tail
 Public endpoints:
 
 - `/health`: deployment health check.
-- `/signal`: read-only latest signal check for every configured timeframe; does not send Telegram
-  messages.
+- `/signal`: read-only cached latest signal check for every configured timeframe; does not send
+  Telegram messages or call Twelve Data.
 
 ## Project Layout
 

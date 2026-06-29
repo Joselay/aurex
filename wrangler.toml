@@ -8,7 +8,6 @@ workers_dev = true
 crons = ["*/5 * * * *"]
 
 [vars]
-MARKET_DATA_PROVIDER = "twelvedata"
 SYMBOL = "XAU/USD"
 TIMEFRAMES = "5min,15min,1h"
 CANDLE_LIMIT = 260
