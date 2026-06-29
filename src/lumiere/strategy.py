@@ -1,3 +1,5 @@
+import math
+
 import pandas as pd
 from ta.momentum import RSIIndicator
 from ta.trend import EMAIndicator
@@ -46,6 +48,10 @@ class XauUsdTrendStrategy:
         if latest[["ema_fast", "ema_slow", "ema_trend", "rsi", "atr"]].isna().any():
             return None
 
+        risk_distance = float(latest.atr) * self.atr_stop_multiple
+        if not math.isfinite(risk_distance) or risk_distance <= 0:
+            return None
+
         buy_setup = (
             latest.close > latest.ema_trend
             and latest.ema_fast > latest.ema_slow
@@ -67,7 +73,10 @@ class XauUsdTrendStrategy:
                 timeframe=timeframe,
                 direction=Direction.BUY,
                 row=latest,
-                reason="M15 trend above EMA200, EMA20 above EMA50, RSI reclaimed 50.",
+                reason=(
+                    f"{timeframe} trend above EMA{self.ema_trend}, "
+                    f"EMA{self.ema_fast} above EMA{self.ema_slow}, RSI reclaimed 50."
+                ),
             )
         if sell_setup:
             return self._build_signal(
@@ -75,7 +84,10 @@ class XauUsdTrendStrategy:
                 timeframe=timeframe,
                 direction=Direction.SELL,
                 row=latest,
-                reason="M15 trend below EMA200, EMA20 below EMA50, RSI lost 50.",
+                reason=(
+                    f"{timeframe} trend below EMA{self.ema_trend}, "
+                    f"EMA{self.ema_fast} below EMA{self.ema_slow}, RSI lost 50."
+                ),
             )
         return None
 
@@ -99,6 +111,8 @@ class XauUsdTrendStrategy:
     ) -> Signal:
         entry = float(row.close)
         risk_distance = float(row.atr) * self.atr_stop_multiple
+        if not math.isfinite(risk_distance) or risk_distance <= 0:
+            raise ValueError("Cannot build signal with non-positive ATR risk distance")
 
         if direction == Direction.BUY:
             stop_loss = entry - risk_distance
