@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aurex.candles import normalize_candles
 from aurex.formatting import format_candle_time
 from aurex.market_structure import analyze_market_structure
-from aurex.settings import get_settings, normalize_xauusd_symbol
+from aurex.settings import get_settings, normalize_timeframe, normalize_xauusd_symbol
 from aurex.signals import (
     latest_signal_key,
     latest_signals,
@@ -98,8 +98,20 @@ def test_rejects_non_gold_symbols():
 
 
 def test_normalizes_and_deduplicates_configured_timeframes():
-    settings = get_settings(SimpleNamespace(TIMEFRAMES="5mn,15min,5min,1h"))
+    settings = get_settings(SimpleNamespace(TIMEFRAMES="5mn,15MIN,5min,1H"))
     assert settings.timeframes == ["5min", "15min", "1h"]
+
+
+def test_rejects_blank_timeframes():
+    with pytest.raises(ValueError, match="Blank timeframe"):
+        normalize_timeframe(" ")
+
+
+def test_rejects_non_positive_strategy_settings():
+    with pytest.raises(ValueError, match="Invalid positive integer setting: RSI_PERIOD"):
+        get_settings(SimpleNamespace(RSI_PERIOD="0"))
+    with pytest.raises(ValueError, match="Invalid positive numeric setting: ATR_STOP_MULTIPLE"):
+        get_settings(SimpleNamespace(ATR_STOP_MULTIPLE="-1"))
 
 
 def test_normalizes_sorts_and_deduplicates_candle_rows():
@@ -204,6 +216,28 @@ async def test_reads_latest_signals_from_kv_without_fetching_candles():
     )
 
     assert await latest_signals(SimpleNamespace(TIMEFRAMES="5min", SIGNALS=kv)) == [signal]
+
+
+@pytest.mark.asyncio
+async def test_ignores_malformed_latest_signal_cache_entries():
+    signal = {
+        "key": "XAU/USD:15min:2026-01-01T00:15:00.000Z:BUY",
+        "symbol": "XAU/USD",
+        "timeframe": "15min",
+        "direction": "BUY",
+        "candleTime": "2026-01-01T00:15:00.000Z",
+    }
+    kv = MapKv(
+        {
+            latest_signal_key("5min"): "not-json",
+            latest_signal_key("15min"): json.dumps({"signal": signal}),
+            latest_signal_key("1h"): json.dumps(["bad-shape"]),
+        }
+    )
+
+    assert await latest_signals(SimpleNamespace(TIMEFRAMES="5min,15min,1h", SIGNALS=kv)) == [
+        signal
+    ]
 
 
 def test_calculates_support_resistance_and_trendline_levels_from_recent_swings():

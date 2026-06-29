@@ -1,3 +1,5 @@
+import math
+import re
 from dataclasses import dataclass
 
 from aurex.constants import (
@@ -52,18 +54,26 @@ def get_settings(env):
     return Settings(
         symbol=symbol,
         timeframes=get_timeframes(env),
-        candle_limit=get_integer(env, "CANDLE_LIMIT", 260),
-        ema_fast=get_integer(env, "EMA_FAST", 20),
-        ema_slow=get_integer(env, "EMA_SLOW", 50),
-        ema_trend=get_integer(env, "EMA_TREND", 200),
-        rsi_period=get_integer(env, "RSI_PERIOD", 14),
-        atr_period=get_integer(env, "ATR_PERIOD", 14),
-        atr_stop_multiple=get_number(env, "ATR_STOP_MULTIPLE", 1.5),
-        reward_multiple_1=get_number(env, "REWARD_MULTIPLE_1", 1.0),
-        reward_multiple_2=get_number(env, "REWARD_MULTIPLE_2", 2.0),
-        structure_lookback=get_integer(env, "STRUCTURE_LOOKBACK", DEFAULT_STRUCTURE_LOOKBACK),
-        pivot_strength=get_integer(env, "PIVOT_STRENGTH", DEFAULT_PIVOT_STRENGTH),
-        trendline_pivot_count=get_integer(env, "TRENDLINE_PIVOTS", DEFAULT_TRENDLINE_PIVOTS),
+        candle_limit=get_positive_integer(env, "CANDLE_LIMIT", 260),
+        ema_fast=get_positive_integer(env, "EMA_FAST", 20),
+        ema_slow=get_positive_integer(env, "EMA_SLOW", 50),
+        ema_trend=get_positive_integer(env, "EMA_TREND", 200),
+        rsi_period=get_positive_integer(env, "RSI_PERIOD", 14),
+        atr_period=get_positive_integer(env, "ATR_PERIOD", 14),
+        atr_stop_multiple=get_positive_number(env, "ATR_STOP_MULTIPLE", 1.5),
+        reward_multiple_1=get_positive_number(env, "REWARD_MULTIPLE_1", 1.0),
+        reward_multiple_2=get_positive_number(env, "REWARD_MULTIPLE_2", 2.0),
+        structure_lookback=get_positive_integer(
+            env,
+            "STRUCTURE_LOOKBACK",
+            DEFAULT_STRUCTURE_LOOKBACK,
+        ),
+        pivot_strength=get_positive_integer(env, "PIVOT_STRENGTH", DEFAULT_PIVOT_STRENGTH),
+        trendline_pivot_count=get_positive_integer(
+            env,
+            "TRENDLINE_PIVOTS",
+            DEFAULT_TRENDLINE_PIVOTS,
+        ),
     )
 
 
@@ -81,9 +91,10 @@ def get_timeframes(env):
 
 
 def normalize_timeframe(timeframe):
-    value = str(timeframe).strip()
-    if value.lower().endswith("mn") and value[:-2].isdigit():
-        return f"{value[:-2]}min"
+    value = str(timeframe).strip().lower()
+    alias_match = re.fullmatch(r"(\d+)mn", value)
+    if alias_match is not None:
+        return f"{alias_match.group(1)}min"
     if value == "":
         raise ValueError("Blank timeframe is not supported")
     return value
@@ -110,7 +121,23 @@ def get_integer(env, key, fallback):
 
 def get_number(env, key, fallback):
     try:
-        return float(get_string(env, key, str(fallback)))
+        value = float(get_string(env, key, str(fallback)))
     except ValueError as exc:
         raise ValueError(f"Invalid numeric setting: {key}") from exc
+    if not math.isfinite(value):
+        raise ValueError(f"Invalid numeric setting: {key}")
+    return value
 
+
+def get_positive_integer(env, key, fallback):
+    value = get_integer(env, key, fallback)
+    if value <= 0:
+        raise ValueError(f"Invalid positive integer setting: {key}")
+    return value
+
+
+def get_positive_number(env, key, fallback):
+    value = get_number(env, key, fallback)
+    if value <= 0:
+        raise ValueError(f"Invalid positive numeric setting: {key}")
+    return value

@@ -64,10 +64,24 @@ async def read_cached_signals(env, timeframes):
         if value is None:
             continue
 
-        cached = json.loads(value)
-        if cached.get("signal") is not None:
-            signals.append(cached["signal"])
+        cached_signal = parse_cached_signal(value, timeframe)
+        if cached_signal is not None:
+            signals.append(cached_signal)
     return signals
+
+
+def parse_cached_signal(value, timeframe):
+    try:
+        cached = json.loads(value)
+    except json.JSONDecodeError:
+        print(f"Ignoring invalid cached signal JSON for {timeframe}")
+        return None
+
+    if not isinstance(cached, dict):
+        print(f"Ignoring invalid cached signal shape for {timeframe}")
+        return None
+    signal = cached.get("signal")
+    return signal if isinstance(signal, dict) else None
 
 
 async def write_cached_signal(env, timeframe, signal, run_date):
@@ -127,4 +141,3 @@ def to_run_date(scheduled_time=None):
 
 def to_js_iso(value):
     return value.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
-
