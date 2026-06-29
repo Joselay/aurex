@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import httpx
 import pandas as pd
 
+from lumiere.market import normalize_xauusd_symbol
 from lumiere.models import normalize_candles
 
 
@@ -20,6 +21,7 @@ class TwelveDataProvider(MarketDataProvider):
         self._client = client
 
     async def get_candles(self, symbol: str, timeframe: str, limit: int) -> pd.DataFrame:
+        symbol = normalize_xauusd_symbol(symbol)
         params = {
             "symbol": symbol,
             "interval": timeframe,

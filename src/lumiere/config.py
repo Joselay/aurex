@@ -1,8 +1,10 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from lumiere.market import XAUUSD_SYMBOL, normalize_xauusd_symbol
 
 
 class Settings(BaseSettings):
@@ -14,7 +16,7 @@ class Settings(BaseSettings):
     market_data_provider: Literal["twelvedata"] = Field("twelvedata", alias="MARKET_DATA_PROVIDER")
     twelvedata_api_key: SecretStr = Field(..., alias="TWELVEDATA_API_KEY")
 
-    symbol: str = Field("XAU/USD", alias="SYMBOL")
+    symbol: str = Field(XAUUSD_SYMBOL, alias="SYMBOL")
     timeframe: str = Field("15min", alias="TIMEFRAME")
     candle_limit: int = Field(260, alias="CANDLE_LIMIT", ge=220)
     poll_seconds: int = Field(300, alias="POLL_SECONDS", ge=30)
@@ -29,3 +31,8 @@ class Settings(BaseSettings):
     atr_stop_multiple: float = Field(1.5, alias="ATR_STOP_MULTIPLE", gt=0)
     reward_multiple_1: float = Field(1.0, alias="REWARD_MULTIPLE_1", gt=0)
     reward_multiple_2: float = Field(2.0, alias="REWARD_MULTIPLE_2", gt=0)
+
+    @field_validator("symbol", mode="before")
+    @classmethod
+    def require_xauusd_symbol(cls, value: str) -> str:
+        return normalize_xauusd_symbol(value)

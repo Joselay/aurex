@@ -4,6 +4,8 @@ from enum import StrEnum
 
 import pandas as pd
 
+from lumiere.market import format_symbol_for_display, normalize_xauusd_symbol
+
 
 class Direction(StrEnum):
     BUY = "BUY"
@@ -22,13 +24,17 @@ class Signal:
     take_profit_2: float
     reason: str
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "symbol", normalize_xauusd_symbol(self.symbol))
+
     @property
     def key(self) -> str:
         return f"{self.symbol}:{self.timeframe}:{self.candle_time.isoformat()}:{self.direction}"
 
     def to_telegram_message(self) -> str:
+        display_symbol = format_symbol_for_display(self.symbol)
         return (
-            f"{self.symbol} {self.direction}\n\n"
+            f"{display_symbol} {self.direction}\n\n"
             f"Timeframe: {self.timeframe}\n"
             f"Candle: {self.candle_time.isoformat()}\n\n"
             f"Entry: {self.entry:.2f}\n"

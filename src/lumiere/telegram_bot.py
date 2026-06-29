@@ -1,6 +1,8 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+from lumiere.market import format_symbol_for_display
+
 
 class TelegramNotifier:
     def __init__(self, application: Application, chat_id: str) -> None:
@@ -23,8 +25,9 @@ def register_handlers(application: Application, service_getter) -> None:
         del context
         service = service_getter()
         if update.effective_message:
+            display_symbol = format_symbol_for_display(service.symbol)
             await update.effective_message.reply_text(
-                f"Watching {service.symbol} on {service.timeframe}."
+                f"Watching {display_symbol} on {service.timeframe}."
             )
 
     async def signal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

@@ -3,6 +3,7 @@ from ta.momentum import RSIIndicator
 from ta.trend import EMAIndicator
 from ta.volatility import AverageTrueRange
 
+from lumiere.market import XAUUSD_SYMBOL, normalize_xauusd_symbol
 from lumiere.models import Direction, Signal, normalize_candles
 
 
@@ -33,8 +34,9 @@ class XauUsdTrendStrategy:
         return max(self.ema_trend, self.ema_slow, self.rsi_period, self.atr_period) + 2
 
     def generate_signal(
-        self, candles: pd.DataFrame, *, symbol: str = "XAU/USD", timeframe: str = "15min"
+        self, candles: pd.DataFrame, *, symbol: str = XAUUSD_SYMBOL, timeframe: str = "15min"
     ) -> Signal | None:
+        symbol = normalize_xauusd_symbol(symbol)
         frame = self._with_indicators(normalize_candles(candles))
         if len(frame) < self.minimum_candles:
             return None

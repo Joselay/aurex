@@ -1,6 +1,7 @@
 import logging
 
 from lumiere.data_provider import MarketDataProvider
+from lumiere.market import normalize_xauusd_symbol
 from lumiere.models import Signal
 from lumiere.storage import SignalStore
 from lumiere.strategy import XauUsdTrendStrategy
@@ -25,7 +26,7 @@ class SignalService:
         self.strategy = strategy
         self.notifier = notifier
         self.store = store
-        self.symbol = symbol
+        self.symbol = normalize_xauusd_symbol(symbol)
         self.timeframe = timeframe
         self.candle_limit = candle_limit
 

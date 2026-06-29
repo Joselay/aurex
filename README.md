@@ -2,6 +2,8 @@
 
 Python bot that watches XAUUSD candles, generates rule-based signals, and sends them to Telegram.
 
+Lumiere is intentionally XAUUSD-only. It does not accept crypto, equities, or other forex pairs.
+
 This is a signal bot, not an auto-trading bot. Demo test and backtest before risking live money.
 
 ## Setup
@@ -16,6 +18,9 @@ Edit `.env`:
 - `TELEGRAM_BOT_TOKEN`: token from BotFather.
 - `TELEGRAM_CHAT_ID`: your user, group, or channel chat ID.
 - `TWELVEDATA_API_KEY`: Twelve Data API key.
+
+The market is fixed to gold XAUUSD. Existing `.env` files may keep `SYMBOL=XAU/USD`, but any other
+symbol is rejected at startup.
 
 To find your chat ID, message your bot once, then open:
 
@@ -42,7 +47,7 @@ uv run lumiere
 Telegram commands:
 
 - `/start`: confirm the bot is online.
-- `/status`: show the watched symbol and timeframe.
+- `/status`: show the watched XAUUSD timeframe.
 - `/signal`: force a fresh signal check.
 
 ## Strategy
