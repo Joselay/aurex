@@ -10,6 +10,7 @@ import {
   normalizeXauUsdSymbol,
   toTelegramMessage,
 } from "../src/index.js";
+import { sendTelegramMessage } from "../src/telegram.js";
 
 function candlesFromCloses(closes) {
   const start = Date.UTC(2026, 0, 1, 0, 0, 0);
@@ -138,9 +139,58 @@ describe("strategy", () => {
     const signal = generateSignal(candlesFromCloses(buySignalCloses()), settings);
 
     assert.ok(signal);
-    assert.match(toTelegramMessage(signal), /^XAUUSD BUY\n\nTimeframe: 1h/m);
-    assert.match(toTelegramMessage(signal), /\nCandle: 2026-01-03 06:45 UTC\n/);
-    assert.match(toTelegramMessage(signal), /\nSupport: \d+\.\d{2}\n/);
-    assert.match(toTelegramMessage(signal), /\nResistance trendline: (?:-|\d+\.\d{2})\n/);
+    const message = toTelegramMessage(signal);
+
+    assert.match(message, /^🟢 <b>XAUUSD BUY SIGNAL<\/b>\n⏱ <b>Timeframe:<\/b> 1h/m);
+    assert.match(message, /\n🕯 <b>Candle:<\/b> 2026-01-03 06:45 UTC\n/);
+    assert.match(message, /\n📍 <b>Trade Plan<\/b>\n/);
+    assert.match(message, /\n🎯 Entry: <code>\d+\.\d{2}<\/code>\n/);
+    assert.match(message, /\n🟢 Support: <code>\d+\.\d{2}<\/code>\n/);
+    assert.match(message, /\n📉 Resistance trendline: <code>(?:-|\d+\.\d{2})<\/code>\n/);
+    assert.match(message, /\n⚠️ <b>Risk:<\/b> Signal only\. Demo test before live trading\.$/);
+  });
+
+  it("escapes dynamic Telegram message content for HTML parse mode", () => {
+    const message = toTelegramMessage({
+      symbol: "XAU/USD",
+      timeframe: "bad <frame>",
+      direction: "BUY",
+      candleTime: "2026-01-01T00:15:00.000Z",
+      entry: 2000,
+      stopLoss: 1990,
+      takeProfit1: 2010,
+      takeProfit2: 2020,
+      marketStructure: {},
+      reason: "EMA20 > EMA50 & RSI < 70",
+    });
+
+    assert.match(message, /bad &lt;frame&gt;/);
+    assert.match(message, /EMA20 &gt; EMA50 &amp; RSI &lt; 70/);
+  });
+});
+
+describe("telegram delivery", () => {
+  it("sends messages with Telegram HTML parse mode", async () => {
+    const originalFetch = globalThis.fetch;
+    let requestBody;
+
+    globalThis.fetch = async (_url, init) => {
+      requestBody = JSON.parse(init.body);
+      return new Response("{}", { status: 200 });
+    };
+
+    try {
+      await sendTelegramMessage(
+        { TELEGRAM_BOT_TOKEN: "token", TELEGRAM_CHAT_ID: "chat" },
+        "<b>XAUUSD BUY SIGNAL</b>",
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    assert.equal(requestBody.chat_id, "chat");
+    assert.equal(requestBody.text, "<b>XAUUSD BUY SIGNAL</b>");
+    assert.equal(requestBody.parse_mode, "HTML");
+    assert.equal(requestBody.disable_web_page_preview, true);
   });
 });
