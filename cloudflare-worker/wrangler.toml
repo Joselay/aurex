@@ -10,7 +10,7 @@ crons = ["*/5 * * * *"]
 [vars]
 MARKET_DATA_PROVIDER = "twelvedata"
 SYMBOL = "XAU/USD"
-TIMEFRAME = "15min"
+TIMEFRAME = "1h"
 CANDLE_LIMIT = 260
 EMA_FAST = 20
 EMA_SLOW = 50
