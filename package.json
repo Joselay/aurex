@@ -1,0 +1,12 @@
+{
+  "name": "lumiere-cloudflare",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy:cloudflare": "npx wrangler deploy --config cloudflare-worker/wrangler.toml",
+    "tail:cloudflare": "npx wrangler tail lumiere"
+  },
+  "devDependencies": {
+    "wrangler": "^4.105.0"
+  }
+}

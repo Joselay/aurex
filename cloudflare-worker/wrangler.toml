@@ -1,0 +1,26 @@
+name = "lumiere"
+main = "src/index.js"
+compatibility_date = "2026-06-29"
+account_id = "38e8c3ce4289ef54fb03f99738c06558"
+workers_dev = true
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+MARKET_DATA_PROVIDER = "twelvedata"
+SYMBOL = "XAU/USD"
+TIMEFRAME = "15min"
+CANDLE_LIMIT = 260
+EMA_FAST = 20
+EMA_SLOW = 50
+EMA_TREND = 200
+RSI_PERIOD = 14
+ATR_PERIOD = 14
+ATR_STOP_MULTIPLE = 1.5
+REWARD_MULTIPLE_1 = 1.0
+REWARD_MULTIPLE_2 = 2.0
+
+[[kv_namespaces]]
+binding = "SIGNALS"
+id = "c6f9f3572dc34b829515aeaa2bb7eab3"

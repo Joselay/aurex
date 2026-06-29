@@ -69,3 +69,25 @@ Signals are de-duplicated in SQLite at `data/signals.sqlite3`.
 uv run pytest
 uv run ruff check .
 ```
+
+## Cloudflare Worker
+
+The `cloudflare-worker/` deployment runs the same XAUUSD signal rules on a Cloudflare Worker Cron
+Trigger every five minutes. It uses Workers KV to de-duplicate sent signals.
+
+Deploy with:
+
+```bash
+npx wrangler deploy --config cloudflare-worker/wrangler.toml
+```
+
+Required Cloudflare secrets:
+
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `TWELVEDATA_API_KEY`
+
+Public endpoints:
+
+- `/health`: deployment health check.
+- `/signal`: read-only latest signal check; does not send Telegram messages.
