@@ -34,12 +34,12 @@ supergroup IDs usually start with `-100`.
 Set production secrets with Wrangler:
 
 ```bash
-npx wrangler secret put TELEGRAM_BOT_TOKEN --config cloudflare-worker/wrangler.toml
-npx wrangler secret put TELEGRAM_CHAT_ID --config cloudflare-worker/wrangler.toml
-npx wrangler secret put TWELVEDATA_API_KEY --config cloudflare-worker/wrangler.toml
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put TELEGRAM_CHAT_ID
+npx wrangler secret put TWELVEDATA_API_KEY
 ```
 
-Runtime defaults live in `cloudflare-worker/wrangler.toml`.
+Runtime defaults live in `wrangler.toml`.
 
 Key defaults:
 
@@ -53,13 +53,13 @@ Key defaults:
 ## Deploy
 
 ```bash
-npm run deploy:cloudflare
+npm run deploy
 ```
 
 Tail logs:
 
 ```bash
-npm run tail:cloudflare
+npm run tail
 ```
 
 Public endpoints:
@@ -67,6 +67,17 @@ Public endpoints:
 - `/health`: deployment health check.
 - `/signal`: read-only latest signal check for every configured timeframe; does not send Telegram
   messages.
+
+## Project Layout
+
+- `src/index.js`: Cloudflare Worker entrypoint and public route handling.
+- `src/signals.js`: signal lookup and publish orchestration.
+- `src/strategy.js`: XAUUSD signal rules.
+- `src/market-structure.js`: support, resistance, and trendline analysis.
+- `src/market-data.js`: Twelve Data candle fetching.
+- `src/settings.js`: environment and Wrangler variable normalization.
+- `src/telegram.js`: Telegram delivery and message formatting.
+- `test/`: Node test runner coverage for settings, candles, strategy, and messages.
 
 ## Strategy
 
@@ -85,6 +96,7 @@ Default rule set:
 ## Development
 
 ```bash
+npm run dev
 npm test
-npm run check:cloudflare
+npm run check
 ```
