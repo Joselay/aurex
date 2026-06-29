@@ -1,8 +1,8 @@
-# Lumiere
+# Aurex
 
 Python bot that watches XAUUSD candles, generates rule-based signals, and sends them to Telegram.
 
-Lumiere is intentionally XAUUSD-only. It does not accept crypto, equities, or other forex pairs.
+Aurex is intentionally XAUUSD-only. It does not accept crypto, equities, or other forex pairs.
 
 This is a signal bot, not an auto-trading bot. Demo test and backtest before risking live money.
 
@@ -35,13 +35,13 @@ For a channel, add the bot as an admin and use the channel ID or username.
 Check once and exit:
 
 ```bash
-uv run lumiere --once
+uv run aurex --once
 ```
 
 Run the Telegram command bot and scheduled signal checks:
 
 ```bash
-uv run lumiere
+uv run aurex
 ```
 
 Telegram commands:

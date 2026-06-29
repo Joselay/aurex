@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from lumiere.market import XAUUSD_SYMBOL, normalize_xauusd_symbol
+from aurex.market import XAUUSD_SYMBOL, normalize_xauusd_symbol
 
 
 class Settings(BaseSettings):

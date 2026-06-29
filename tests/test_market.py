@@ -1,10 +1,10 @@
 import pytest
 from pydantic import ValidationError
 
-from lumiere.config import Settings
-from lumiere.data_provider import TwelveDataProvider
-from lumiere.market import XAUUSD_SYMBOL, normalize_xauusd_symbol
-from lumiere.strategy import XauUsdTrendStrategy
+from aurex.config import Settings
+from aurex.data_provider import TwelveDataProvider
+from aurex.market import XAUUSD_SYMBOL, normalize_xauusd_symbol
+from aurex.strategy import XauUsdTrendStrategy
 
 
 def _settings(**overrides: str) -> Settings:

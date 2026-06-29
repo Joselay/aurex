@@ -6,7 +6,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/health") {
-      return jsonResponse({ ok: true, service: "lumiere", runtime: "cloudflare-worker" });
+      return jsonResponse({ ok: true, service: "aurex", runtime: "cloudflare-worker" });
     }
 
     if (url.pathname === "/signal") {
@@ -16,7 +16,7 @@ export default {
 
     const settings = getSettings(env);
     return jsonResponse({
-      service: "lumiere",
+      service: "aurex",
       symbol: XAUUSD_DISPLAY_SYMBOL,
       timeframes: settings.timeframes,
     });
@@ -355,7 +355,7 @@ function normalizeXauUsdSymbol(symbol) {
   if (value === XAUUSD_SYMBOL || value === XAUUSD_DISPLAY_SYMBOL) {
     return XAUUSD_SYMBOL;
   }
-  throw new Error(`Lumiere only supports gold ${XAUUSD_DISPLAY_SYMBOL}`);
+  throw new Error(`Aurex only supports gold ${XAUUSD_DISPLAY_SYMBOL}`);
 }
 
 function parseUtcIso(value) {

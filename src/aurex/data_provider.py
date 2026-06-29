@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 import httpx
 import pandas as pd
 
-from lumiere.market import normalize_xauusd_symbol
-from lumiere.models import normalize_candles
+from aurex.market import normalize_xauusd_symbol
+from aurex.models import normalize_candles
 
 
 class MarketDataProvider(ABC):

@@ -4,7 +4,7 @@ from enum import StrEnum
 
 import pandas as pd
 
-from lumiere.market import format_symbol_for_display, normalize_xauusd_symbol
+from aurex.market import format_symbol_for_display, normalize_xauusd_symbol
 
 
 class Direction(StrEnum):

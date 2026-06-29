@@ -2,8 +2,8 @@ from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
-from lumiere.models import Direction
-from lumiere.strategy import XauUsdTrendStrategy
+from aurex.models import Direction
+from aurex.strategy import XauUsdTrendStrategy
 
 
 def _candles(closes: list[float]) -> pd.DataFrame:

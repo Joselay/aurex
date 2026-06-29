@@ -1,7 +1,7 @@
 [project]
-name = "lumiere"
+name = "aurex"
 version = "0.1.0"
-description = "Lumiere Telegram signal bot for XAUUSD forex/CFD analysis"
+description = "Aurex Telegram signal bot for XAUUSD forex/CFD analysis"
 readme = "README.md"
 authors = [
     { name = "Tongmenglay Smae", email = "98274892+Joselay@users.noreply.github.com" }
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-lumiere = "lumiere.main:cli"
+aurex = "aurex.main:cli"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

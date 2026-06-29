@@ -118,7 +118,7 @@ wheels = [
 ]
 
 [[package]]
-name = "lumiere"
+name = "aurex"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

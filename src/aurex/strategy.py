@@ -5,8 +5,8 @@ from ta.momentum import RSIIndicator
 from ta.trend import EMAIndicator
 from ta.volatility import AverageTrueRange
 
-from lumiere.market import XAUUSD_SYMBOL, normalize_xauusd_symbol
-from lumiere.models import Direction, Signal, normalize_candles
+from aurex.market import XAUUSD_SYMBOL, normalize_xauusd_symbol
+from aurex.models import Direction, Signal, normalize_candles
 
 
 class XauUsdTrendStrategy:

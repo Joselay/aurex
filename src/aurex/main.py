@@ -6,12 +6,12 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pydantic import ValidationError
 from telegram.ext import Application
 
-from lumiere.config import Settings
-from lumiere.data_provider import TwelveDataProvider
-from lumiere.service import SignalService
-from lumiere.storage import SignalStore
-from lumiere.strategy import XauUsdTrendStrategy
-from lumiere.telegram_bot import TelegramNotifier, register_handlers
+from aurex.config import Settings
+from aurex.data_provider import TwelveDataProvider
+from aurex.service import SignalService
+from aurex.storage import SignalStore
+from aurex.strategy import XauUsdTrendStrategy
+from aurex.telegram_bot import TelegramNotifier, register_handlers
 
 
 def build_service(settings: Settings, application: Application) -> SignalService:

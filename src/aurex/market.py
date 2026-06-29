@@ -10,7 +10,7 @@ def normalize_xauusd_symbol(symbol: str) -> str:
         return XAUUSD_SYMBOL
 
     raise ValueError(
-        f"Lumiere only supports gold {XAUUSD_DISPLAY_SYMBOL}; "
+        f"Aurex only supports gold {XAUUSD_DISPLAY_SYMBOL}; "
         f"use {XAUUSD_SYMBOL} for Twelve Data."
     )
 

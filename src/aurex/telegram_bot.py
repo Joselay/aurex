@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-from lumiere.market import format_symbol_for_display
+from aurex.market import format_symbol_for_display
 
 
 class TelegramNotifier:

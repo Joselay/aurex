@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-from lumiere.models import Signal
+from aurex.models import Signal
 
 
 class SignalStore:

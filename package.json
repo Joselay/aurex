@@ -1,10 +1,10 @@
 {
-  "name": "lumiere-cloudflare",
+  "name": "aurex-cloudflare",
   "private": true,
   "type": "module",
   "scripts": {
     "deploy:cloudflare": "npx wrangler deploy --config cloudflare-worker/wrangler.toml",
-    "tail:cloudflare": "npx wrangler tail lumiere"
+    "tail:cloudflare": "npx wrangler tail aurex"
   },
   "devDependencies": {
     "wrangler": "^4.105.0"

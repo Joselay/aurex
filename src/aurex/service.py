@@ -1,11 +1,11 @@
 import logging
 
-from lumiere.data_provider import MarketDataProvider
-from lumiere.market import normalize_xauusd_symbol
-from lumiere.models import Signal
-from lumiere.storage import SignalStore
-from lumiere.strategy import XauUsdTrendStrategy
-from lumiere.telegram_bot import TelegramNotifier
+from aurex.data_provider import MarketDataProvider
+from aurex.market import normalize_xauusd_symbol
+from aurex.models import Signal
+from aurex.storage import SignalStore
+from aurex.strategy import XauUsdTrendStrategy
+from aurex.telegram_bot import TelegramNotifier
 
 logger = logging.getLogger(__name__)
 
