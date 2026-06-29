@@ -11,14 +11,17 @@ This is a signal bot, not an auto-trading bot. Demo test and backtest before ris
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars
 ```
 
-Edit `.dev.vars` for local Wrangler development:
+Production configuration is stored in Cloudflare, not in `.env` files.
 
-- `TELEGRAM_BOT_TOKEN`: token from BotFather.
-- `TELEGRAM_CHAT_ID`: your group chat ID.
-- `TWELVEDATA_API_KEY`: Twelve Data API key.
+Set production secrets with Wrangler:
+
+```bash
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put TELEGRAM_CHAT_ID
+npx wrangler secret put TWELVEDATA_API_KEY
+```
 
 For a Telegram group, add the bot to the group, send any message in that group, then open:
 
@@ -29,15 +32,23 @@ https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates
 Use the `message.chat.id` value for `TELEGRAM_CHAT_ID`. Group chat IDs are usually negative, and
 supergroup IDs usually start with `-100`.
 
-## Configure Cloudflare
-
-Set production secrets with Wrangler:
+For local Cloudflare development only, create `.dev.vars`:
 
 ```bash
-npx wrangler secret put TELEGRAM_BOT_TOKEN
-npx wrangler secret put TELEGRAM_CHAT_ID
-npx wrangler secret put TWELVEDATA_API_KEY
+cp .dev.vars.example .dev.vars
 ```
+
+Edit `.dev.vars` with the same secret names used in Cloudflare:
+
+- `TELEGRAM_BOT_TOKEN`: token from BotFather.
+- `TELEGRAM_CHAT_ID`: your group chat ID.
+- `TWELVEDATA_API_KEY`: Twelve Data API key.
+
+Do not use `.env`; this project is a Cloudflare Worker and Wrangler uses `.dev.vars` locally.
+
+## Configure Cloudflare
+
+Cloudflare production secrets are managed with `npx wrangler secret put`.
 
 Runtime defaults live in `wrangler.toml`.
 
