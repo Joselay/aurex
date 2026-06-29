@@ -10,45 +10,61 @@ export default {
     }
 
     if (url.pathname === "/signal") {
-      const signal = await latestSignal(env);
-      return jsonResponse({ signal });
+      const signals = await latestSignals(env);
+      return jsonResponse({ signals, signal: signals[0] ?? null });
     }
 
+    const settings = getSettings(env);
     return jsonResponse({
       service: "lumiere",
       symbol: XAUUSD_DISPLAY_SYMBOL,
-      timeframe: getString(env, "TIMEFRAME", "15min"),
+      timeframes: settings.timeframes,
     });
   },
 
   async scheduled(_event, env, ctx) {
-    ctx.waitUntil(publishNewSignal(env, ctx));
+    ctx.waitUntil(publishNewSignals(env));
   },
 };
 
-async function publishNewSignal(env, ctx) {
-  const signal = await latestSignal(env);
-  if (signal === null) {
+async function publishNewSignals(env) {
+  const signals = await latestSignals(env);
+  if (signals.length === 0) {
     console.log("No signal");
-    return null;
+    return [];
   }
 
-  const existing = await env.SIGNALS.get(signal.key);
-  if (existing !== null) {
-    console.log(`Signal already sent: ${signal.key}`);
-    return signal;
+  const published = [];
+  for (const signal of signals) {
+    const existing = await env.SIGNALS.get(signal.key);
+    if (existing !== null) {
+      console.log(`Signal already sent: ${signal.key}`);
+      continue;
+    }
+
+    await sendTelegramMessage(env, toTelegramMessage(signal));
+    await env.SIGNALS.put(signal.key, JSON.stringify(signal));
+    published.push(signal);
+    console.log(`Published signal: ${signal.key}`);
   }
 
-  await sendTelegramMessage(env, toTelegramMessage(signal));
-  await env.SIGNALS.put(signal.key, JSON.stringify(signal));
-  console.log(`Published signal: ${signal.key}`);
-  return signal;
+  return published;
 }
 
-async function latestSignal(env) {
+async function latestSignals(env) {
   const settings = getSettings(env);
-  const candles = await getCandles(env, settings);
-  return generateSignal(candles, settings);
+  const signals = [];
+
+  for (const timeframe of settings.timeframes) {
+    const timeframeSettings = { ...settings, timeframe };
+    const candles = await getCandles(env, timeframeSettings);
+    const signal = generateSignal(candles, timeframeSettings);
+    if (signal !== null) {
+      signals.push(signal);
+    }
+  }
+
+  return signals;
 }
 
 async function getCandles(env, settings) {
@@ -297,7 +313,7 @@ function getSettings(env) {
   const symbol = normalizeXauUsdSymbol(getString(env, "SYMBOL", XAUUSD_SYMBOL));
   return {
     symbol,
-    timeframe: getString(env, "TIMEFRAME", "15min"),
+    timeframes: getTimeframes(env),
     candleLimit: getInteger(env, "CANDLE_LIMIT", 260),
     emaFast: getInteger(env, "EMA_FAST", 20),
     emaSlow: getInteger(env, "EMA_SLOW", 50),
@@ -308,6 +324,30 @@ function getSettings(env) {
     rewardMultiple1: getNumber(env, "REWARD_MULTIPLE_1", 1.0),
     rewardMultiple2: getNumber(env, "REWARD_MULTIPLE_2", 2.0),
   };
+}
+
+function getTimeframes(env) {
+  const configured = getString(env, "TIMEFRAMES", getString(env, "TIMEFRAME", "15min"));
+  const timeframes = configured
+    .split(",")
+    .map((value) => normalizeTimeframe(value))
+    .filter((value, index, values) => values.indexOf(value) === index);
+
+  if (timeframes.length === 0) {
+    throw new Error("At least one timeframe is required");
+  }
+  return timeframes;
+}
+
+function normalizeTimeframe(timeframe) {
+  const value = timeframe.trim();
+  if (/^\d+mn$/i.test(value)) {
+    return `${value.slice(0, -2)}min`;
+  }
+  if (value === "") {
+    throw new Error("Blank timeframe is not supported");
+  }
+  return value;
 }
 
 function normalizeXauUsdSymbol(symbol) {

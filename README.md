@@ -72,8 +72,9 @@ uv run ruff check .
 
 ## Cloudflare Worker
 
-The `cloudflare-worker/` deployment runs the same XAUUSD signal rules on a Cloudflare Worker Cron
-Trigger every five minutes. It uses Workers KV to de-duplicate sent signals.
+The `cloudflare-worker/` deployment runs the same XAUUSD signal rules for 5-minute, 15-minute, and
+1-hour candles on a Cloudflare Worker Cron Trigger every five minutes. It uses Workers KV to
+de-duplicate sent signals.
 
 Deploy with:
 
@@ -90,4 +91,5 @@ Required Cloudflare secrets:
 Public endpoints:
 
 - `/health`: deployment health check.
-- `/signal`: read-only latest signal check; does not send Telegram messages.
+- `/signal`: read-only latest signal check for every configured timeframe; does not send Telegram
+  messages.
