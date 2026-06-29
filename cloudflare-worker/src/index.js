@@ -410,3 +410,15 @@ function jsonResponse(value, init = {}) {
     },
   });
 }
+
+export {
+  atr,
+  ema,
+  generateSignal,
+  getSettings,
+  normalizeCandles,
+  normalizeTimeframe,
+  normalizeXauUsdSymbol,
+  rsi,
+  toTelegramMessage,
+};

@@ -1,6 +1,7 @@
 # Aurex
 
-Python bot that watches XAUUSD candles, generates rule-based signals, and sends them to Telegram.
+Cloudflare Worker that watches XAUUSD candles, generates rule-based signals, and sends new signals
+to Telegram.
 
 Aurex is intentionally XAUUSD-only. It does not accept crypto, equities, or other forex pairs.
 
@@ -9,46 +10,61 @@ This is a signal bot, not an auto-trading bot. Demo test and backtest before ris
 ## Setup
 
 ```bash
-uv sync
-cp .env.example .env
+npm install
+cp .dev.vars.example .dev.vars
 ```
 
-Edit `.env`:
+Edit `.dev.vars` for local Wrangler development:
 
 - `TELEGRAM_BOT_TOKEN`: token from BotFather.
-- `TELEGRAM_CHAT_ID`: your user, group, or channel chat ID.
+- `TELEGRAM_CHAT_ID`: your group chat ID.
 - `TWELVEDATA_API_KEY`: Twelve Data API key.
 
-The market is fixed to gold XAUUSD. Existing `.env` files may keep `SYMBOL=XAU/USD`, but any other
-symbol is rejected at startup.
-
-To find your chat ID, message your bot once, then open:
+For a Telegram group, add the bot to the group, send any message in that group, then open:
 
 ```text
 https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates
 ```
 
-For a channel, add the bot as an admin and use the channel ID or username.
+Use the `message.chat.id` value for `TELEGRAM_CHAT_ID`. Group chat IDs are usually negative, and
+supergroup IDs usually start with `-100`.
 
-## Run
+## Configure Cloudflare
 
-Check once and exit:
-
-```bash
-uv run aurex --once
-```
-
-Run the Telegram command bot and scheduled signal checks:
+Set production secrets with Wrangler:
 
 ```bash
-uv run aurex
+npx wrangler secret put TELEGRAM_BOT_TOKEN --config cloudflare-worker/wrangler.toml
+npx wrangler secret put TELEGRAM_CHAT_ID --config cloudflare-worker/wrangler.toml
+npx wrangler secret put TWELVEDATA_API_KEY --config cloudflare-worker/wrangler.toml
 ```
 
-Telegram commands:
+Runtime defaults live in `cloudflare-worker/wrangler.toml`.
 
-- `/start`: confirm the bot is online.
-- `/status`: show the watched XAUUSD timeframe.
-- `/signal`: force a fresh signal check.
+Key defaults:
+
+- `SYMBOL`: fixed to `XAU/USD`.
+- `TIMEFRAMES`: `5min,15min,1h`.
+- Cron trigger: every five minutes.
+- Signal de-duplication: Workers KV namespace bound as `SIGNALS`.
+
+## Deploy
+
+```bash
+npm run deploy:cloudflare
+```
+
+Tail logs:
+
+```bash
+npm run tail:cloudflare
+```
+
+Public endpoints:
+
+- `/health`: deployment health check.
+- `/signal`: read-only latest signal check for every configured timeframe; does not send Telegram
+  messages.
 
 ## Strategy
 
@@ -61,35 +77,9 @@ Default rule set:
 - Stop loss uses `1.5 * ATR`.
 - TP1 and TP2 use 1R and 2R.
 
-Signals are de-duplicated in SQLite at `data/signals.sqlite3`.
-
 ## Development
 
 ```bash
-uv run pytest
-uv run ruff check .
+npm test
+npm run check:cloudflare
 ```
-
-## Cloudflare Worker
-
-The `cloudflare-worker/` deployment runs the same XAUUSD signal rules for 5-minute, 15-minute, and
-1-hour candles on a Cloudflare Worker Cron Trigger every five minutes. It uses Workers KV to
-de-duplicate sent signals.
-
-Deploy with:
-
-```bash
-npx wrangler deploy --config cloudflare-worker/wrangler.toml
-```
-
-Required Cloudflare secrets:
-
-- `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_CHAT_ID`
-- `TWELVEDATA_API_KEY`
-
-Public endpoints:
-
-- `/health`: deployment health check.
-- `/signal`: read-only latest signal check for every configured timeframe; does not send Telegram
-  messages.
