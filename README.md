@@ -1,7 +1,7 @@
 # Aurex
 
-Cloudflare Worker that watches XAUUSD candles, generates rule-based signals, and sends new signals
-to Telegram.
+Python Cloudflare Worker that watches XAUUSD candles, generates rule-based signals, and sends new
+signals to Telegram.
 
 Aurex is intentionally XAUUSD-only. It does not accept crypto, equities, or other forex pairs.
 
@@ -10,17 +10,17 @@ This is a signal bot, not an auto-trading bot. Demo test and backtest before ris
 ## Setup
 
 ```bash
-npm install
+uv sync
 ```
 
 Production configuration is stored in Cloudflare, not in `.env` files.
 
-Set production secrets with Wrangler:
+Set production secrets with pywrangler:
 
 ```bash
-npx wrangler secret put TELEGRAM_BOT_TOKEN
-npx wrangler secret put TELEGRAM_CHAT_ID
-npx wrangler secret put TWELVEDATA_API_KEY
+uv run pywrangler secret put TELEGRAM_BOT_TOKEN
+uv run pywrangler secret put TELEGRAM_CHAT_ID
+uv run pywrangler secret put TWELVEDATA_API_KEY
 ```
 
 For a Telegram group, add the bot to the group, send any message in that group, then open:
@@ -48,7 +48,7 @@ Do not use `.env`; this project is a Cloudflare Worker and Wrangler uses `.dev.v
 
 ## Configure Cloudflare
 
-Cloudflare production secrets are managed with `npx wrangler secret put`.
+Cloudflare production secrets are managed with `uv run pywrangler secret put`.
 
 Runtime defaults live in `wrangler.toml`.
 
@@ -70,13 +70,13 @@ Key defaults:
 ## Deploy
 
 ```bash
-npm run deploy
+uv run pywrangler deploy
 ```
 
 Tail logs:
 
 ```bash
-npm run tail
+uv run pywrangler tail aurex
 ```
 
 Public endpoints:
@@ -87,14 +87,14 @@ Public endpoints:
 
 ## Project Layout
 
-- `src/index.js`: Cloudflare Worker entrypoint and public route handling.
-- `src/signals.js`: signal lookup and publish orchestration.
-- `src/strategy.js`: XAUUSD signal rules.
-- `src/market-structure.js`: support, resistance, and trendline analysis.
-- `src/market-data.js`: Twelve Data candle fetching.
-- `src/settings.js`: environment and Wrangler variable normalization.
-- `src/telegram.js`: Telegram delivery and message formatting.
-- `test/`: Node test runner coverage for settings, candles, strategy, and messages.
+- `src/entry.py`: Python Worker entrypoint and Cloudflare runtime adapters.
+- `src/aurex/signals.py`: signal lookup and publish orchestration.
+- `src/aurex/strategy.py`: XAUUSD signal rules.
+- `src/aurex/market_structure.py`: support, resistance, and trendline analysis.
+- `src/aurex/market_data.py`: Twelve Data candle fetching.
+- `src/aurex/settings.py`: environment and Wrangler variable normalization.
+- `src/aurex/telegram.py`: Telegram delivery and message formatting.
+- `test/`: pytest coverage for settings, candles, cadence, strategy, and messages.
 
 ## Strategy
 
@@ -113,7 +113,7 @@ Default rule set:
 ## Development
 
 ```bash
-npm run dev
-npm test
-npm run check
+uv run pywrangler dev
+uv run pytest
+uv run ruff check .
 ```
