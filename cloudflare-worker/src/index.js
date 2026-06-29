@@ -1,5 +1,8 @@
 const XAUUSD_SYMBOL = "XAU/USD";
 const XAUUSD_DISPLAY_SYMBOL = "XAUUSD";
+const DEFAULT_STRUCTURE_LOOKBACK = 120;
+const DEFAULT_PIVOT_STRENGTH = 2;
+const DEFAULT_TRENDLINE_PIVOTS = 6;
 
 export default {
   async fetch(request, env, ctx) {
@@ -140,16 +143,18 @@ function generateSignal(candles, settings) {
     rsiValues[previousIndex] >= 50 &&
     rsiValues[latestIndex] < 50;
 
+  const marketStructure = analyzeMarketStructure(candles, settings);
+
   if (buySetup) {
-    return buildSignal(settings, latest, "BUY", riskDistance);
+    return buildSignal(settings, latest, "BUY", riskDistance, marketStructure);
   }
   if (sellSetup) {
-    return buildSignal(settings, latest, "SELL", riskDistance);
+    return buildSignal(settings, latest, "SELL", riskDistance, marketStructure);
   }
   return null;
 }
 
-function buildSignal(settings, candle, direction, riskDistance) {
+function buildSignal(settings, candle, direction, riskDistance, marketStructure) {
   const entry = candle.close;
   const isBuy = direction === "BUY";
   const stopLoss = isBuy ? entry - riskDistance : entry + riskDistance;
@@ -167,14 +172,140 @@ function buildSignal(settings, candle, direction, riskDistance) {
     timeframe: settings.timeframe,
     direction,
     candleTime: candle.datetime,
+    candleTimeDisplay: formatCandleTime(candle.datetime),
     entry,
     stopLoss,
     takeProfit1,
     takeProfit2,
+    marketStructure,
     reason,
   };
   signal.key = `${signal.symbol}:${signal.timeframe}:${signal.candleTime}:${signal.direction}`;
   return signal;
+}
+
+function analyzeMarketStructure(candles, settings = {}) {
+  if (candles.length === 0) {
+    return {
+      support: null,
+      resistance: null,
+      supportTrendline: null,
+      resistanceTrendline: null,
+    };
+  }
+
+  const latestIndex = candles.length - 1;
+  const latestClose = candles[latestIndex].close;
+  const lookback = Math.max(5, settings.structureLookback ?? DEFAULT_STRUCTURE_LOOKBACK);
+  const pivotStrength = Math.max(1, settings.pivotStrength ?? DEFAULT_PIVOT_STRENGTH);
+  const trendlinePivotCount = Math.max(
+    2,
+    settings.trendlinePivotCount ?? DEFAULT_TRENDLINE_PIVOTS,
+  );
+  const startIndex = Math.max(0, candles.length - lookback);
+  const recentCandles = candles.slice(startIndex);
+  const pivots = findSwingPivots(candles, pivotStrength).filter(
+    (pivot) => pivot.index >= startIndex,
+  );
+
+  const swingHighs = pivots.filter((pivot) => pivot.type === "high");
+  const swingLows = pivots.filter((pivot) => pivot.type === "low");
+
+  return {
+    support: nearestLevelBelow(
+      latestClose,
+      swingLows.map((pivot) => pivot.price),
+      recentCandles.map((candle) => candle.low),
+    ),
+    resistance: nearestLevelAbove(
+      latestClose,
+      swingHighs.map((pivot) => pivot.price),
+      recentCandles.map((candle) => candle.high),
+    ),
+    supportTrendline: projectedTrendlineValue(swingLows, latestIndex, trendlinePivotCount),
+    resistanceTrendline: projectedTrendlineValue(swingHighs, latestIndex, trendlinePivotCount),
+  };
+}
+
+function findSwingPivots(candles, strength) {
+  const pivots = [];
+
+  for (let index = strength; index < candles.length - strength; index += 1) {
+    const candle = candles[index];
+    let isSwingHigh = true;
+    let isSwingLow = true;
+
+    for (let offset = 1; offset <= strength; offset += 1) {
+      if (
+        candle.high <= candles[index - offset].high ||
+        candle.high <= candles[index + offset].high
+      ) {
+        isSwingHigh = false;
+      }
+      if (
+        candle.low >= candles[index - offset].low ||
+        candle.low >= candles[index + offset].low
+      ) {
+        isSwingLow = false;
+      }
+    }
+
+    if (isSwingHigh) {
+      pivots.push({ type: "high", index, price: candle.high });
+    }
+    if (isSwingLow) {
+      pivots.push({ type: "low", index, price: candle.low });
+    }
+  }
+
+  return pivots;
+}
+
+function nearestLevelBelow(price, preferredLevels, fallbackLevels) {
+  const below = preferredLevels.filter((level) => level <= price);
+  if (below.length > 0) {
+    return Math.max(...below);
+  }
+  if (fallbackLevels.length === 0) {
+    return null;
+  }
+  return Math.min(...fallbackLevels);
+}
+
+function nearestLevelAbove(price, preferredLevels, fallbackLevels) {
+  const above = preferredLevels.filter((level) => level >= price);
+  if (above.length > 0) {
+    return Math.min(...above);
+  }
+  if (fallbackLevels.length === 0) {
+    return null;
+  }
+  return Math.max(...fallbackLevels);
+}
+
+function projectedTrendlineValue(pivots, targetIndex, pivotCount) {
+  const selected = pivots.slice(-pivotCount);
+  if (selected.length < 2) {
+    return null;
+  }
+
+  const averageIndex = selected.reduce((total, pivot) => total + pivot.index, 0) / selected.length;
+  const averagePrice = selected.reduce((total, pivot) => total + pivot.price, 0) / selected.length;
+  const variance = selected.reduce(
+    (total, pivot) => total + (pivot.index - averageIndex) ** 2,
+    0,
+  );
+  if (variance === 0) {
+    return null;
+  }
+
+  const covariance = selected.reduce(
+    (total, pivot) => total + (pivot.index - averageIndex) * (pivot.price - averagePrice),
+    0,
+  );
+  const slope = covariance / variance;
+  const intercept = averagePrice - slope * averageIndex;
+  return slope * targetIndex + intercept;
 }
 
 function normalizeCandles(values) {
@@ -297,16 +428,27 @@ function toTelegramMessage(signal) {
     `${XAUUSD_DISPLAY_SYMBOL} ${signal.direction}`,
     "",
     `Timeframe: ${signal.timeframe}`,
-    `Candle: ${signal.candleTime}`,
+    `Candle: ${signal.candleTimeDisplay ?? formatCandleTime(signal.candleTime)}`,
     "",
     `Entry: ${formatPrice(signal.entry)}`,
     `SL: ${formatPrice(signal.stopLoss)}`,
     `TP1: ${formatPrice(signal.takeProfit1)}`,
     `TP2: ${formatPrice(signal.takeProfit2)}`,
     "",
+    ...toMarketStructureMessageLines(signal.marketStructure),
+    "",
     `Reason: ${signal.reason}`,
     "Risk: signal only; demo test before live trading.",
   ].join("\n");
+}
+
+function toMarketStructureMessageLines(marketStructure = {}) {
+  return [
+    `Support: ${formatOptionalPrice(marketStructure.support)}`,
+    `Resistance: ${formatOptionalPrice(marketStructure.resistance)}`,
+    `Support trendline: ${formatOptionalPrice(marketStructure.supportTrendline)}`,
+    `Resistance trendline: ${formatOptionalPrice(marketStructure.resistanceTrendline)}`,
+  ];
 }
 
 function getSettings(env) {
@@ -323,6 +465,9 @@ function getSettings(env) {
     atrStopMultiple: getNumber(env, "ATR_STOP_MULTIPLE", 1.5),
     rewardMultiple1: getNumber(env, "REWARD_MULTIPLE_1", 1.0),
     rewardMultiple2: getNumber(env, "REWARD_MULTIPLE_2", 2.0),
+    structureLookback: getInteger(env, "STRUCTURE_LOOKBACK", DEFAULT_STRUCTURE_LOOKBACK),
+    pivotStrength: getInteger(env, "PIVOT_STRENGTH", DEFAULT_PIVOT_STRENGTH),
+    trendlinePivotCount: getInteger(env, "TRENDLINE_PIVOTS", DEFAULT_TRENDLINE_PIVOTS),
   };
 }
 
@@ -401,6 +546,28 @@ function formatPrice(value) {
   return value.toFixed(2);
 }
 
+function formatOptionalPrice(value) {
+  return Number.isFinite(value) ? formatPrice(value) : "-";
+}
+
+function formatCandleTime(value) {
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime())) {
+    throw new Error(`Invalid candle datetime: ${value}`);
+  }
+
+  const year = timestamp.getUTCFullYear();
+  const month = pad2(timestamp.getUTCMonth() + 1);
+  const day = pad2(timestamp.getUTCDate());
+  const hour = pad2(timestamp.getUTCHours());
+  const minute = pad2(timestamp.getUTCMinutes());
+  return `${year}-${month}-${day} ${hour}:${minute} UTC`;
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
 function jsonResponse(value, init = {}) {
   return new Response(JSON.stringify(value, null, 2), {
     ...init,
@@ -412,8 +579,10 @@ function jsonResponse(value, init = {}) {
 }
 
 export {
+  analyzeMarketStructure,
   atr,
   ema,
+  formatCandleTime,
   generateSignal,
   getSettings,
   normalizeCandles,

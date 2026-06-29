@@ -47,6 +47,8 @@ Key defaults:
 - `TIMEFRAMES`: `5min,15min,1h`.
 - Cron trigger: every five minutes.
 - Signal de-duplication: Workers KV namespace bound as `SIGNALS`.
+- Structure levels: support/resistance from recent swing pivots, plus projected support/resistance
+  trendlines.
 
 ## Deploy
 
@@ -76,6 +78,9 @@ Default rule set:
 - Trigger when RSI crosses back through 50.
 - Stop loss uses `1.5 * ATR`.
 - TP1 and TP2 use 1R and 2R.
+- Support and resistance use recent swing lows/highs.
+- Support and resistance trendlines project recent swing-low/swing-high regression lines to the
+  latest candle.
 
 ## Development
 
