@@ -73,7 +73,7 @@ async def read_cached_signals(env, timeframes):
 def parse_cached_signal(value, timeframe):
     try:
         cached = json.loads(value)
-    except json.JSONDecodeError:
+    except (TypeError, json.JSONDecodeError):
         print(f"Ignoring invalid cached signal JSON for {timeframe}")
         return None
 

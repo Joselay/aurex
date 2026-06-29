@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 def format_price(value):
@@ -11,5 +11,4 @@ def format_optional_price(value):
 
 def format_candle_time(value):
     timestamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    return timestamp.strftime("%Y-%m-%d %H:%M UTC")
-
+    return timestamp.astimezone(UTC).strftime("%Y-%m-%d %H:%M UTC")

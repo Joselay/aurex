@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from aurex.candles import normalize_candles
 from aurex.formatting import format_candle_time
+from aurex.market_data import get_candles
 from aurex.market_structure import analyze_market_structure
 from aurex.settings import get_settings, normalize_timeframe, normalize_xauusd_symbol
 from aurex.signals import (
@@ -130,6 +131,7 @@ def test_normalizes_sorts_and_deduplicates_candle_rows():
 
 def test_formats_candle_time_for_human_facing_messages():
     assert format_candle_time("2026-01-01T00:15:00.000Z") == "2026-01-01 00:15 UTC"
+    assert format_candle_time("2026-01-01T07:15:00+07:00") == "2026-01-01 00:15 UTC"
 
 
 def test_converts_supported_timeframes_to_minutes():
@@ -195,6 +197,28 @@ async def test_refreshes_and_caches_only_due_timeframes():
 
 
 @pytest.mark.asyncio
+async def test_requires_twelve_data_api_key_before_fetching_candles():
+    async def fetch_json(_url):
+        raise AssertionError("fetch_json should not be called without an API key")
+
+    settings = get_settings(SimpleNamespace(TIMEFRAMES="5min")).for_timeframe("5min")
+
+    with pytest.raises(RuntimeError, match="TWELVEDATA_API_KEY is required"):
+        await get_candles(SimpleNamespace(TWELVEDATA_API_KEY=" "), settings, fetch_json)
+
+
+@pytest.mark.asyncio
+async def test_rejects_invalid_twelve_data_response_shape():
+    async def fetch_json(_url):
+        return ["not", "a", "payload"]
+
+    settings = get_settings(SimpleNamespace(TIMEFRAMES="5min")).for_timeframe("5min")
+
+    with pytest.raises(RuntimeError, match="Twelve Data returned an invalid response"):
+        await get_candles(SimpleNamespace(TWELVEDATA_API_KEY="key"), settings, fetch_json)
+
+
+@pytest.mark.asyncio
 async def test_reads_latest_signals_from_kv_without_fetching_candles():
     signal = {
         "key": "XAU/USD:5min:2026-01-01T00:05:00.000Z:BUY",
@@ -232,12 +256,13 @@ async def test_ignores_malformed_latest_signal_cache_entries():
             latest_signal_key("5min"): "not-json",
             latest_signal_key("15min"): json.dumps({"signal": signal}),
             latest_signal_key("1h"): json.dumps(["bad-shape"]),
+            latest_signal_key("1day"): ["bad-json-type"],
         }
     )
 
-    assert await latest_signals(SimpleNamespace(TIMEFRAMES="5min,15min,1h", SIGNALS=kv)) == [
-        signal
-    ]
+    env = SimpleNamespace(TIMEFRAMES="5min,15min,1h,1day", SIGNALS=kv)
+
+    assert await latest_signals(env) == [signal]
 
 
 def test_calculates_support_resistance_and_trendline_levels_from_recent_swings():
